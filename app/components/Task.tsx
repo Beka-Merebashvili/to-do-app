@@ -16,15 +16,29 @@ const Task: React.FC<TaskProps> = ({ task }) => {
   const [openModalEdit, setOpenModalEdit] = useState<boolean>(false);
   const [openModalDeleted, setOpenModalDeleted] = useState<boolean>(false);
   const [taskToEdit, setTaskToEdit] = useState<string>(task.text);
+  const [editError, setEditError] = useState<string>("");
 
   const handleSubmitEditTodo: FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
-    await editTodo({
-      id: task.id,
-      text: taskToEdit,
-    });
-    setOpenModalEdit(false);
-    router.refresh();
+    if (taskToEdit.trim() === "") {
+      setEditError("Task text cannot be empty.");
+      return;
+    }
+
+    // Clear any previous error
+    setEditError("");
+
+    try {
+      await editTodo({
+        id: task.id,
+        text: taskToEdit,
+      });
+
+      setOpenModalEdit(false);
+      router.refresh();
+    } catch (error) {
+      console.error("Error editing task:", error);
+    }
   };
   const handleDeleteTask = async (id: string) => {
     await deleteTodo(id);
@@ -32,7 +46,7 @@ const Task: React.FC<TaskProps> = ({ task }) => {
     router.refresh();
   };
   return (
-    <tr kay={task.id}>
+    <tr key={task.id}>
       <td>{task.text}</td>
       <td className="flex gap-5">
         <FiEdit
@@ -44,6 +58,7 @@ const Task: React.FC<TaskProps> = ({ task }) => {
         <Modal modalOpen={openModalEdit} setModalOpen={setOpenModalEdit}>
           <form onSubmit={handleSubmitEditTodo}>
             <h3 className="font-bold text-lg">Edit task</h3>
+            {editError && <p className="text-red-500">{editError}</p>}
             <div className="modal-action">
               <input
                 value={taskToEdit}
